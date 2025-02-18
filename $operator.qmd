@@ -1,0 +1,31 @@
+---
+title: "$ operator"
+format: html
+---
+```{r}
+f <- "https://raw.githubusercontent.com/difiore/ada-datasets/refs/heads/main/Country-Data-2016.csv"
+d <- read_csv(file = f, col_names = TRUE)
+
+d
+dim(d)
+
+#How many countries
+d$country
+
+names(d)
+?median
+#median population size
+median(d$population, na.rm = TRUE)
+
+median(d$area, na.rm = TRUE)
+
+#adding a new column to your data frame that gives you the density which is the pop/area
+d$density <- d$population/d$area
+
+?order
+
+order(d$density)
+ ?sort
+
+sort(d$density, decreasing = FALSE)
+```

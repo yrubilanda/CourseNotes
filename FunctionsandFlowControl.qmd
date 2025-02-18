@@ -1,0 +1,145 @@
+---
+title: "Functions and Flow Control"
+format: html
+---
+
+Note: Transformations make it look like a normal distributed data or so that residuals look like they are normally distributed.
+
+##Loops
+```R
+for (i in 1:....) {do this}
+```
+```{r}
+for (i in 1:10) {
+print(i)
+}
+```
+
+```R
+while (<<test>>) {do this}
+```
+
+```{r}
+i <- 1
+
+while ( i <= 10) {
+print(i)
+i <- i +1
+}
+```
+
+```{r}
+f <- "https://raw.githubusercontent.com/difiore/ada-datasets/refs/heads/main/papers.csv"
+```
+
+```{r}
+library(readr)
+p <- read_csv(f, col_names = TRUE)
+```
+
+```{r}
+f2 <- "https://raw.githubusercontent.com/difiore/ada-datasets/refs/heads/main/creators.csv"
+```
+
+```{r}
+c <- read_csv(f2, col_names = TRUE)
+```
+
+```{r}
+library(tidyverse)
+p <- p |>
+  separate_wider_delim(cols= Author,
+                       delim = ";",
+                       names = c("First Author", "A2", "A3", "A4"),
+                       too_few = "align_start", too_many = "drop") |>
+  mutate(A2 = str_trim(`A2`, "both"),
+         A3 = str_trim(`A3`, "both"),
+         A4 = str_trim(`A4`, "both"))
+```
+
+
+```{r}
+c <- c |>
+  distinct()
+
+head(c)
+```
+
+```{r}
+inner <- inner_join(c, p, by = c("fullName" = "First Author"))
+inner <- inner_join(p, c, by = c("First Author" = "fullName"))
+```
+
+```{r}
+left <- left_join(c, p, by = c("fullName" = "First Author"))
+right <- right_join(p, c, by = c("First Author" = "fullName"))
+```
+
+```{r}
+find_pubs <- tibble(fullName = c("Abbott, David H"))
+inner <- inner_join(find_pubs, p, by = c("fullName" = "First Author"))
+```
+
+```{r}
+#install.packages("fuzzyjoin")
+```
+
+```{r}
+library(fuzzyjoin)
+```
+
+```{r}
+find_pubs <- tibble(partialName = c("^Abbott"))
+inner_fuzzy <- regex_inner_join(p, find_pubs, by = c("First Author" =
+"partialName"))
+```
+
+```{r}
+find_pubs <- tibble(partialName = c("^Wil", "ony$"))
+inner_fuzzy <- regex_inner_join(p, find_pubs, by = c("First Author" =
+"partialName"))
+```
+
+##Functions
+
+Pseudo code for Function
+
+```R
+my_function <- function(<argument list>){
+    <<function code>>
+    return(<value>)
+}
+```
+
+```{r}
+my_print_reps <- function(x, reps = 2){
+  for (i in 1:reps){
+    print(x)
+  }
+  for (i in 1:nrow(x)){
+    print(x[i, ])
+}
+  return(NULL)
+}
+```
+
+
+```{r}
+df <- data.frame(var1 = c(1,2), var2 = c(3,4))
+```
+
+```{r}
+my_print_reps(df)
+```
+```{r}
+my_filter <- function(x, condition, variable){
+  library(tidyverse)
+  x <- x |> filter(rowid %in% condition)
+  return(x)
+}
+```
+
+
+```{r}
+df <- data.frame(rowid = 1:5, value = c("a","b", "c", "d", "e"))
+```

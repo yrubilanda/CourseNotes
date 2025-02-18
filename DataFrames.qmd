@@ -1,0 +1,136 @@
+---
+title: "Data Frames and Boxplots"
+format: html
+---
+
+## DataFrame versus Tibble
+
+There are certain functions that will only work with tibbles and certain functions that only work with dataframes. So you need to be aware of which one you are using
+
+### Data Frame
+
+```{r}
+f <- "https://raw.githubusercontent.com/difiore/ada-datasets/refs/heads/main/CPDS-1960-2014-reduced.csv"
+```
+
+```{r}
+d <- read.csv(f, header = TRUE)
+```
+
+``` r
+d
+```
+
+###Tibble
+
+```{r}
+f <- "https://raw.githubusercontent.com/difiore/ada-datasets/refs/heads/main/CPDS-1960-2014-reduced.csv"
+```
+
+``` r
+d <- read_csv(f, col_names = TRUE)
+```
+
+``` r
+d
+```
+
+You can convert from dataframe to tibble or tibble to dataframe
+
+``` r
+d <- as_tibble(d)
+d <- as.data.frame(d)
+```
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+f <- "https://raw.githubusercontent.com/difiore/ada-datasets/refs/heads/main/KamilarAndCooperData.csv"
+```
+
+```{r}
+d <- read_csv(f, col_names = TRUE)
+```
+
+``` r
+d
+```
+
+##Accessing Variables using attach(), detach(), and with()
+
+attach() lets us use variable names directly
+
+```{r}
+mean(d$Brain_Size_Species_Mean, na.rm = TRUE)
+```
+
+Attach data frame to working directory in R, now you wont. have to do d\$ each time
+
+```{r}
+attach(d)
+```
+
+```{r}
+mean(Brain_Size_Species_Mean, na.rm = TRUE)
+```
+
+You can also detach using, this will detach and then you can attach another data frame or just specify what data fram you are reffering too.
+
+``` r
+detach()
+```
+
+The with version is sort of a local version of attaching
+
+```{r}
+with(
+  d,
+  mean(Body_mass_female_mean, na.rm = TRUE)) #have not attached or detached
+```
+
+## Tidy Data
+![](images/tidydata.png)
+
+``` R
+install.packages("skimr")
+```
+
+```{r}
+library(skimr)
+```
+```{r}
+boxplot(log(d$Body_mass_female_mean))
+stripchart(log(d$Body_mass_female_mean),
+           method = "jitter",
+           col = "blue",
+           vertical = TRUE,
+           add = TRUE)
+```
+
+```{r}
+boxplot(data = d, log(Body_mass_female_mean) ~ Family)
+stripchart(data = d, log(Body_mass_female_mean) ~ Family,
+            method = "jitter", #moves points from side to side so they are not stacked right above eachother and now you can visualize where the points are
+            col = "blue", #color of points
+            vertical = TRUE,
+            add = TRUE)
+```
+
+
+```{r} 
+p <- ggplot(
+          data = d,
+          aes(x = Family, y = log(Body_mass_female_mean))
+        )+
+  geom_boxplot(na.rm = TRUE) +
+  geom_jitter(color = "blue", width = 0.1)
+p
+```
+
+```{r}
+p <- p + theme(axis.text.x = element_text(angle =90))
+p <- p + ylab("log(Female Body Mass)")
+p
+```

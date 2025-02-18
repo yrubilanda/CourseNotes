@@ -1,0 +1,79 @@
+---
+title: "In Class Challenge"
+format: html
+---
+
+```{r}
+library(readr)
+gps <- read_csv("https://raw.githubusercontent.com/difiore/ada-datasets/refs/heads/main/sample_gps_data.csv", col_names = TRUE)
+beh <- read_csv("https://raw.githubusercontent.com/difiore/ada-datasets/refs/heads/main/sample_behavioral_data.csv", col_names = TRUE)
+```
+
+## Data Wrangling Challenge
+```{r}
+beh$Year <- format(beh$Date.Time, '%Y')
+```
+
+```{r}
+library(dplyr)
+
+#https://stackoverflow.com/questions/69845719/filter-a-specific-range-of-dates-across-mult-year-data-set
+beh_filtered <- beh |>
+  filter(Year >= 2012, Year <= 2014)
+```
+
+```{r}
+d <- inner_join(gps, beh_filtered, by = c("Date.Time", "Observer"))
+```
+
+Convert Mean.Latitude and Mean.Longitude to UTM coordinates
+```{r}
+install.packages("oce")
+```
+
+```{r}
+library(oce)
+d <- d |>
+  rowwise() |>
+  mutate(
+    easting = lonlat2utm(
+      `Mean.Longitude`, `Mean.Latitude`)$easting,
+    northing = lonlat2utm(
+      `Mean.Longitude`, `Mean.Latitude`)$northing +
+        10000000)
+```
+
+```{r}
+Nenki <- d |>
+  filter(Focal.Animal == "Nenki")
+```
+
+Install these packages in R: {mosiac}, {radiant}, {moments}, {sciplot}, {infer}
+Load {tidyverse}
+
+```{r}
+install.packages("mosaic")
+install.packages("radiant")
+library(tidyverse)
+```
+
+create 2 functions one for pop variance
+```{r}
+volumes <- c(1200, 4000, 5000, 3400)
+
+my_pop_var <- function(x){
+  v <- sum((x - mean(x))^2)/(length(x))
+  return(v)
+}
+
+my_sample_var <- function(x){
+  v <- sum((x - mean(x))^2)/(length(x) - 1)
+  return(v)
+}
+```
+
+```{r}
+(a <- my_pop_var(volumes))
+(b <- my_sample_var(volumes))
+(c <- var(volumes))
+```
