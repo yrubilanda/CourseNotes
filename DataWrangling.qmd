@@ -1,0 +1,30 @@
+---
+title: "Data Wrangling"
+format: html
+editor: visual
+---
+
+## Getting Data into R
+
+module: https://difiore.github.io/ada-2025/08-module.html
+
+### Reading in different datasets (.csv, .txt. .xlsx)
+
+data: https://github.com/difiore/ada-datasets
+csv: https://github.com/difiore/ada-datasets/blob/main/CPDS-1960-2014-reduced.csv
+txt: https://github.com/difiore/ada-datasets/blob/main/CPDS-1960-2014-reduced.txt
+xlsx: https://github.com/difiore/ada-datasets/blob/main/CPDS-1960-2014-reduced.xlsx
+
+### Working with local files - this means they are on your local computer
+
+1. You need to set a path to your file. - Download the data and save in your working directory
+2. To do this you need to know what directory you are working in:
+```{r}
+getwd()
+```
+
+
+
+
+
+
