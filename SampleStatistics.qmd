@@ -1,0 +1,130 @@
+---
+title: "Statistics"
+format: html
+---
+
+## NORMAL Distribution
+
+```{r}
+install.packages("mosaic")
+```
+
+```{r}
+library(mosaic)
+```
+
+```{r}
+mu <- 10 # for 'mean' parameter
+sigma <- 2 # for 'sd' parameter
+plotDist("norm", mean = mu, ds = sigma, xlab = "x", ylab = "Frequency")
+```
+
+```{r}
+s1 <- rnorm(n=10, mean = 10, sd = 2) #draws different set of random numbers from this set each time, so our mean will always be slighlty different
+mean(s1)
+```
+
+```{r}
+s2 <- rnorm(n = 1000, mean = 10, sd = 2)
+mean(s2)
+sd(s2)
+```
+
+### SAMPLING Distribution
+
+Different from a normal distribution, distribution of a statistic. So for instance the mean of s1 will be different each time because each time it is taking a random set of 10 numbers.
+
+```{r}
+reps <- 500 #generate 500 replication
+
+samp_dist_mean <-
+  do(reps) * mean(rnorm(n = 10, mean = 10, sd = 2)) #repeated sampling out of normal distribution, we are doing this 500 times
+#the thing i am doing 500 times is taking the mean of a normal distribution drawn from a sample of 10 that has a mean of 10 and a sd of 2
+str(samp_dist_mean)
+# generates a sampling distribution for the mean of our sample
+samp_dist_median <-
+  do(reps) * median(rnorm(n = 10, mean = 10, sd = 2))
+# generates a sampling distribution for the median of our sample
+```
+
+```{r}
+histogram(samp_dist_mean$mean)
+```
+
+```{r}
+histogram(samp_dist_median$median)
+```
+
+```{r}
+mean(samp_dist_mean$mean)
+```
+
+## RELIABILITY
+
+How far off is a statistic that we calculate based on a sampling distribution likeley to be from the true population value of the parameter interest
+
+standard error - measure of reliability/unreliability standard error (SE) = square root of the variance of the sampling distribution = standard deviation of a sampling distribution
+
+standard deviation of the mean variable of that distribution sd \<- applies to a sample se \<- measure of uncertainity in a sampling distribution, sd of sampling distribution
+
+```{r}
+se_mean <- sd(samp_dist_mean$mean) #How uncertain is estimate of the mean
+se_median <- sd(samp_dist_median$median) #How uncertain is the estimate of the median
+```
+
+```{r}
+sd(samp_dist_mean$mean)
+```
+
+## Confidence Intervals
+
+The SE can be used to derive another measure of uncertainty in a statistic's value: the confidence interval or the CI
+
+The CI is another way of describing a statistic's sampling distribution, and it plays a central role in basic inferential statistics.
+
+a 95% CI for instance, if i were to repeat the sampling again, 95% of the time the CI should fall within that CI that I estimated within my first sample.
+
+```{r}
+challenge <- rnorm(n = 1000, mean = 2, sd = 4)
+mean(challenge)
+sd(challenge) 
+```
+
+Standard Error of the mean based on this sample
+
+SE = sd(x)/sqrt(n)
+
+```{r}
+se <- sd(challenge)/sqrt(1000)
+```
+
+```{r}
+reps <- 1000 #generate 500 replication
+
+s_mean <-
+  do(reps) * mean(rnorm(n = 100, mean = 2, sd = 4)) #repeated sampling out of normal distribution, we are doing this 500 times
+#the thing i am doing 500 times is taking the mean of a normal distribution drawn from a sample of 10 that has a mean of 10 and a sd of 2
+str(samp_dist_mean)
+# generates a sampling distribution for the mean of our sample
+s_median <-
+  do(reps) * median(rnorm(n = 100, mean = 2, sd = 4))
+# generates a sampling distribution for the median of our sample
+```
+
+```{r}
+se_mean <- sd(s_mean$mean) #How uncertain is estimate of the mean
+se_median <- sd(s_median$median) #How uncertain is the estimate of the median
+```
+
+```{r}
+histogram(s_mean$mean)
+```
+
+Beta Distribution
+
+```{r}
+plotDist("beta", shape1 = 0.3 , shape2 = 4)
+reps = 1000
+s <- do(reps) * mean(rbeta(n=100, shape1 = .3, shape2 = 4))
+histogram(s$mean)
+```
