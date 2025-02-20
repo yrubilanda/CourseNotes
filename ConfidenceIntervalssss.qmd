@@ -1,0 +1,104 @@
+---
+title: "Confidence Intervals"
+format: html
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+## Confidence Intervals
+
+What is a confidence interval (CI)?
+
+The standard error tells us how much our statistic (like an average)
+might change if we took multiple samples. But we can take this one step
+further and create a confidence interval (CI), which gives us a range
+where we expect the true value to fall.
+
+Think of it like this:
+
+Imagine you want to estimate the average water-holding capacity of
+reservoirs in Tikal. Since measuring every reservoir precisely is
+impossible, you take a sample of 10 reservoirs, calculate their volumes,
+and find the average volume is 50,000 cubic meters.
+
+However, you know that if you sampled another 10 reservoirs, the average
+might be slightly different. The standard error helps you estimate how
+much the average volume might vary if you took different samples.
+
+Once you have the standard error, you can calculate a confidence
+interval (CI), which gives you a range where the true average reservoir
+volume likely falls.
+
+### Example
+
+Estimating the Average Reservoir Volume
+
+Step 1: Calculate the Sample Average You measure 10 reservoirs and find
+the average volume is 50,000 cubic meters.
+
+Step 2: Estimate the Standard Error The standard error tells you how
+much the average might vary if you took another sample. Let’s say the
+standard error is 3,000 cubic meters.
+
+Step 3: Create a 95% Confidence Interval A 95% confidence interval is
+usually calculated as:
+
+\$\$Sample Average ± ( Standard Error × 2 )
+Sample Average±(Standard Error×2)\$\$
+
+For your reservoir data:
+
+50 , 000 ± ( 3 , 000 × 2 ) = 50 , 000 ± 6 , 000
+50,000±(3,000×2)=50,000±6,000
+
+So, the 95% confidence interval is 44,000 to 56,000 cubic meters.
+
+What This Means for Your Research You are 95% confident that the true
+average reservoir volume in Tikal is between 44,000 and 56,000 cubic
+meters. If the confidence interval was wide (e.g., 30,000 to 70,000
+cubic meters), it would mean your estimate is less precise because the
+standard error is high. If the confidence interval was narrow (e.g.,
+48,000 to 52,000 cubic meters), it would mean you have a high level of
+precision in your estimate.
+
+```{r}
+n <- 10000
+mu <- 25
+sigma <- 10
+set.seed(1)
+v <- rnorm(n, mu, sigma)
+s <- sample(v, size = 40, replace = FALSE)
+(m <- mean(s))
+```
+
+```{r}
+(se <- sigma/sqrt(length(s)))  # if population standard deviation is known
+```
+
+```{r}
+(sd <- sd(s))
+```
+
+```{r}
+(se <- sd(s)/sqrt(length(s)))  # if population standard deviation is unknown
+```
+
+```{r}
+# alternatively, we could use `sciplot::se(s)`
+(se <- sciplot::se(s))
+```
+
+To calculate the 95% CI
+
+```{r}
+percent_ci <- 95
+alpha <- 1 - percent_ci/100  # alpha = 0.05
+lower <- m + qnorm(alpha/2) * se
+# where qnorm(alpha /2) is the 2.5% quantile of the standard normal
+# distribution
+upper <- m + qnorm(1 - alpha/2) * se
+# where qnorm(1 - alpha / 2) is the 97.5% quantile of the standard normal
+# distribution
+(ci <- c(lower, upper))
+```
