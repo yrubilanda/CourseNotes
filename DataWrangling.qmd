@@ -10,21 +10,324 @@ module: https://difiore.github.io/ada-2025/08-module.html
 
 ### Reading in different datasets (.csv, .txt. .xlsx)
 
-data: https://github.com/difiore/ada-datasets
-csv: https://github.com/difiore/ada-datasets/blob/main/CPDS-1960-2014-reduced.csv
-txt: https://github.com/difiore/ada-datasets/blob/main/CPDS-1960-2014-reduced.txt
+data: https://github.com/difiore/ada-datasets csv: https://github.com/difiore/ada-datasets/blob/main/CPDS-1960-2014-reduced.csv 
+
+txt: https://github.com/difiore/ada-datasets/blob/main/CPDS-1960-2014-reduced.txt 
+
 xlsx: https://github.com/difiore/ada-datasets/blob/main/CPDS-1960-2014-reduced.xlsx
 
 ### Working with local files - this means they are on your local computer
 
-1. You need to set a path to your file. - Download the data and save in your working directory
-2. To do this you need to know what directory you are working in:
+1.  You need to set a path to your file. - Download the data and save in your working directory
+2.  To do this you need to know what directory you are working in:
+
 ```{r}
 getwd()
 ```
+set file path, this file path will only work for the machine you are on because your file path on a different machine may differ
 
+```{r}
+f <- "CPDS-1960-2014-reduced.csv" #just the file as we are already in the wd folder
+d_baseR <- read.table(f, header = TRUE, sep = ",", stringsAsFactors = FALSE) #raw base R
+head(d_baseR)
+```
+You can also read files in using the Readr package
 
+```{r}
+#install readr
+#install.packages("readr")
+library(readr)
+```
 
+```{r}
+f <- "CPDS-1960-2014-reduced.csv"
+d_readR <- read_csv(f, col_names = TRUE)
+```
 
+### To read excel files
+You need to load the readxl library
+```{r}
+library(readxl)
+```
 
+```{r}
+f <- "CPDS-1960-2014-reduced.xlsx"
+dxlxs <- read_excel(f, sheet = 1, col_names = TRUE)
+head(dxlxs)
+```
 
+The best way that helps within machines as of now is using the raw url if possible
+```{r}
+raw_file <- "https://raw.githubusercontent.com/difiore/ada-datasets/refs/heads/main/CPDS-1960-2014-reduced.csv"
+raw_data <- read_csv(f, col_names = TRUE)
+```
+
+## Exploratory Data Analysis
+```{r}
+f <- "https://raw.githubusercontent.com/difiore/ada-datasets/main/Country-Data-2016.csv"
+d <- read_csv(f, col_names = TRUE)
+names(d)
+```
+```{r}
+#install.packages("tidyverse") #downloads and installs package tidyverse
+
+#both of the following do the same:
+library(tidyverse) #pulls package into global environment so you can access functions
+require(tidyverse) #pulls package into global environment so you can access functions
+```
+
+```{r}
+#Everything in R is an object (variables, functions, environments)
+x<-4
+x
+```
+
+```{r}
+x<-mean
+x
+
+mean(c(1,2,3,4))
+x(c(1,2,3,4))
+
+#Objects have a class, mode, and a type
+class(x)
+mode(x)
+typeof(x)
+
+#fundamental data structures and their attributes and organization - vector/array/matrix
+x <- c(1,2,3,4) #creating a vector of 4 numbers using the c or concatenate function
+mode(x)
+typeof(x)
+x
+
+x <- c(1,2,"a",4) 
+typeof(x) #the type is now a character b/c a number can be a character but a character
+#cannot be a number. so when asked what the type of the vector is, it will take that of "a"
+
+#LOGICAL OR BOOLEAN
+x <- TRUE
+mode(x)
+class(x)
+
+x <- c(1,2,"a",TRUE) #array that contains numerical, character, and Boolean
+#FORCED to be character because that is the biggest class, they can all fall under
+class(x)
+```
+
+## CLASS EXCERCISE - DATA MANIPULATION
+```{r}
+f <- "https://raw.githubusercontent.com/difiore/ada-datasets/refs/heads/main/data-wrangling.csv" #a file I have chosen and assigned to the variable f
+d <- read_csv(f, col_names = TRUE) #reading the csv file and passing to the variable d
+d
+
+d["Genus"] #extracting column genus from data, still as tabular data
+d[c("Genus", "Fauna")] #you can pull multiple columns at once
+d$Genus #pulls out column as well without quotations as a vector, a list
+d[,3] #pulling out the third column
+d[3,] #pulling out the third row
+
+#looking at the data
+class(d) #class of the dataset
+str(d) #types of class for all the data, type assignmnets when data gets pulled in
+glimpse(d) 
+head(d) #first lines of data
+tail(d) #last rows of data
+head(d, 100) #first 100 rows of data
+View(head(d, 100))
+
+#new variable from one field dataset
+gs <- d$MeanGroupSize #extracts mean group size as a vector, pulls out column using the $
+gs
+class(gs)
+head(gs)
+str(gs)
+
+gs <- d[, "MeanGroupSize"] #dataframe d and pulling out an unspecified (all) rows and named column
+gs
+class(gs)
+
+gs+1 #adding 1 to each element
+mean(gs) #will give you something undefined because we have NA variables in the data
+mean(gs, na.rm = TRUE) #na.remove, so removes all NA values when set to TRUE, then you can get the mean
+
+#manipulations
+sciname <- paste(d$Genus, d$Species, sep = "") #pasting together genus species as vector, sep is the separator, you can add a space or other separator
+sciname
+
+sciname <- paste0(d$Genus, " ", d$Species)
+sciname
+
+sciname <- tolower(sciname) #all lowercase
+sciname
+
+sciname <- toupper(sciname) #all uppercase
+sciname
+
+name <- unique(d$Genus)
+name
+
+name <- unique(d[["Genus"]])
+name
+```
+
+```{r}
+fbm <- d$Body_mass_female_mean #pull out female body mass
+fbm
+
+bs <- d$Brain_Size_Species_Mean #pull out brain size
+bs
+
+plot(fbm, bs) #plot brain size to female body mass
+
+plot(log(fbm), log(bs)) #plot log of fbm and bs
+```
+
+## Scatterplot with ggplot
+
+```{r}
+f <- "https://raw.githubusercontent.com/difiore/ada-datasets/refs/heads/main/KamilarAndCooperData.csv"
+```
+
+```{r}
+library(readr)
+d <- read_csv(f, col_names = TRUE)
+```
+
+```{r}
+library(ggplot2)
+p <- ggplot(data = d, aes(
+                          x = log(Body_mass_female_mean),
+                          y = log(Brain_Size_Female_Mean)
+))
+p <- p + geom_point(na.rm = TRUE)
+p
+```
+
+Adding a regression line
+
+```{r}
+p <- p + geom_smooth(method = "lm", na.rm = TRUE, color = "green")
+p
+```
+
+```{r}
+p <- ggplot(data = d, aes(
+            x = log(Body_mass_female_mean),
+            y = log(Brain_Size_Female_Mean)
+)) #creating the plot, just an x and y axis no points
+
+p <- p + geom_point(na.rm = TRUE) +
+  geom_smooth(method = "lm", na.rm = TRUE, color = "green") #adds points and regression line
+p
+
+p <- p + 
+  geom_vline(xintercept = 7) + #adds x intercept line
+  geom_hline(yintercept =3) #adds y intercept line
+
+p <- p +
+  geom_point(data = d, aes(
+            x = log(Body_mass_female_mean),
+            y = log(Body_mass_male_mean))) + 
+  geom_smooth(data = d, aes(
+    x = log(Body_mass_female_mean),
+    y = log(Body_mass_male_mean)), method = "lm", na.rm = TRUE, color = "red")
+p
+```
+
+```{r}
+p <- ggplot()#creating the plot, just an x and y axis no points
+
+p <- p + geom_point(data = d, mapping = aes(
+            x = log(Body_mass_female_mean),
+            y = log(Brain_Size_Female_Mean)
+), na.rm = TRUE) +
+  geom_smooth(data = d, aes(
+            x = log(Body_mass_female_mean),
+            y = log(Brain_Size_Female_Mean)), method = "lm", na.rm = TRUE, color = "green") #adds points and regression line
+p
+
+p <- p + 
+  geom_vline(xintercept = 7) + #adds x intercept line
+  geom_hline(yintercept =3) #adds y intercept line
+
+p <- p +
+  geom_point(data = d, mapping = aes(
+            x = log(Body_mass_female_mean),
+            y = log(Body_mass_male_mean))) + 
+  geom_smooth(data = d, aes(
+    x = log(Body_mass_female_mean),
+    y = log(Body_mass_male_mean)), method = "lm", na.rm = TRUE, color = "red")
+p
+```
+
+\|\> is the same as %\>%
+
+d \<- d \|\> select(A, B, C) #selects columns A, B, C from d and creates
+new d
+
+you can build off d \<- d \|\> select(A, B, C) \|\> filter() \|\>
+arrange()
+
+summarise(.data ....)
+
+s \<- summarise
+
+Using {base} R
+
+```{r}
+s_R <- d[d$Family == "Hominidae" & d$Mass_Dimorphism > 2,]
+```
+
+Using {dplyr}
+
+```{r}
+d
+```
+
+```{r}
+library(dplyr)
+s <- arrange(d, Family, Genus, desc(Body_mass_male_mean))
+```
+
+```{r}
+s <- filter(d, Family == "Hominidae" & Mass_Dimorphism >2)
+s
+```
+
+## Flow Control and Looping
+
+```{r}
+f <- "https://raw.githubusercontent.com/difiore/ada-datasets/refs/heads/main/IMDB-movies.csv"
+```
+
+```{r}
+d <- read_csv(f, col_names = TRUE)
+```
+
+## Conditionals 
+
+-   if (test) {dothis} else {dothat} 
+
+-   ifelse(test, do this if true, do this if false) 
+
+-   if_else(test, do this if true, do this if false) 
+
+-   case_when( 
+          case1 ~ result1, 
+          case2 ~ result2, 
+          case3 ~ result3,
+          TRUE ~ all others ) 
+          )
+        
+d <- mutate(d, diet_strategy = ifelse(Fruit >= 50, "frugivore",
+                          ifelse(Leaves >= 50, "folivore",
+                          ifelse(Fruit < 50 & Leaves < 50, "omnivore", NA))))
+                          
+```{r}
+library(stringr)
+```
+
+```{r}
+d2 <- mutate(d, comedy = ifelse(Comedy = genres, TRUE, FALSE))
+d2
+```
