@@ -117,8 +117,7 @@ histogram(s$mean)
 ```
 
 rnorm() and rbeta() draw random numbers from different distributions
-rnorm() = normal distribution random
-rbeta() - beta distribution random
+rnorm() = normal distribution random rbeta() - beta distribution random
 
 ```{r}
 x <- rbeta(n = 1000, .3, 4)
@@ -136,6 +135,7 @@ reps <- 500
 s <- do(reps) * mean(rbeta(n=100, .3, 4)) #500 means of 100 random samples
 s
 ```
+
 ```{r}
 sd(s$mean)
 ```
@@ -145,7 +145,11 @@ histogram(s$mean)
 ```
 
 ## CRITICAL VALUES
-We will often use q_() function to get the value of X associated with particular quantiles of a distribution, whether that distribution is theoritcal or empirical
+
+We will often use q\_() function to get the value of X associated with
+particular quantiles of a distribution, whether that distribution is
+theoritcal or empirical
+
 ```{r}
 c <- qnorm(c(0.025, 0.50, 0.975), mean = 0, sd = 1)
 c
@@ -157,13 +161,16 @@ q
 ```
 
 Example
+
 ```{r}
 plotDist("norm", mean = 10, sd = 2)
 c <- qnorm(p = c(0.025, 0.25, 0.50, 0.75, 0.975), mean = 10, sd = 2)
 c #displays values that fall at 2.5%, 25%, 50%, 75%, and 97.5%, results are our critical values
 ```
 
-What is the theoritical 95% CI around the estimate of the mean of the following vector
+What is the theoritical 95% CI around the estimate of the mean of the
+following vector
+
 ```{r}
 x <- c(2.9, 4.8, 8.9, -3.2, 9.1, -2.5, -0.9, -0.1, 2.8, -1.7) #random ten numbers from a normal distribution
 m <- mean(x)
@@ -182,12 +189,16 @@ ci <- m + qnorm(c(alpha/2, (1-(alpha/2)))) * se
 ci
 ```
 
-## T-Distribution for smaller <30 population sizes
+## T-Distribution for smaller \<30 population sizes
+
 ```{r}
 mean(x) + c(qt(0.025, df = length(x)-1), qt(0.975, df = length(x)-1))*sd(x)/sqrt(length(x))
 ```
 
-Instead of assuming its normal, resample, use data from a single sample and we use monte carlo to approximate a sampling distribution even without access to the population from which samples are drawn
+Instead of assuming its normal, resample, use data from a single sample
+and we use monte carlo to approximate a sampling distribution even
+without access to the population from which samples are drawn
+
 ```{r}
 x <- c(2.9, 4.8, 8.9, -3.2, 9.1, -2.5, -0.9, -0.1, 2.8, -1.7)
 n_boot <- 1000 #elements long 10000
