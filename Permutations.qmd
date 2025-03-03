@@ -1,0 +1,130 @@
+---
+title: "Class Challenge"
+format: html
+---
+
+## A Two Sample T-test
+
+```{r}
+library(readr)
+f <- "https://raw.githubusercontent.com/difiore/ada-datasets/refs/heads/main/tbs-2006-2008-ranges.csv"
+d <- read_csv(f, col_names = TRUE) 
+```
+
+```{r}
+#determine mean, SD, and SE, in Kernel 95 home range size for each sex
+kernel95_stats <- d |>
+  group_by(sex) |>
+  summarize(
+    
+    #calculate mean
+    mean = mean(kernel95),
+    
+    #calculate SD
+    sd = sd(kernel95),
+    
+    #calculate se
+    se = sd(kernel95)/sqrt(length(kernel95))
+  )
+```
+
+```{r}
+p <- ggplot(data = d, mapping = aes(x = sex, y = kernel95)) +
+  geom_boxplot() +
+  geom_jitter(color="black", size=0.4, alpha=0.9)
+
+p
+```
+
+For each sex, generate a bootstrap distribution for the mean of home range size, where you resample the data within each sex 10,000 times
+
+```{r}
+library(mosaic)
+
+m$sex <- "males"
+f$sex <- "females"
+
+n_boot <- 10000
+
+boot_m <- do(n_boot) * mean(sample(M$kernel95, length(M$kernel95), replace = TRUE))
+```
+
+Inferential analysis
+Is there a significant difference in mean home range size of males and females?
+What is H0 and Ha?
+
+Two samples t-test assuming roughly equal variance in the two groups
+  What is the test statistic?
+  
+```{r}
+t_stat <- (mean_m$mean mean_f$mean) - 0
+
+s2 <- ((nrow(males) - 1) * sd(males$kernel95)^2 + (nrow(females)-1) * sd(females$kernel95)^2)
+```
+
+```{r}
+t.test(x = m$kernel95_stats, y = f$kernel95_stats, alternative = "two.sided")
+```
+
+```{r}
+d2 <- data.frame(
+  sex = d$sex,
+  kernel95 = d$kernel95
+)
+
+d2
+```
+
+```{r}
+library(dplyr)
+d <- d |>
+  select(id, sex, kernel95)
+
+summary <- d |>
+  group_by(sex) |>
+  summarize(mean = mean(kernel95))
+
+obs <- filter(summary, sex == "F") |> pull(mean) -
+        filter(summary, sex == "M") |> pull(mean)
+
+obs
+```
+generating null distribution from our data
+```{r}
+reps <- 10000
+perm <- vector()
+
+#shuffling up sex vector
+for (i in 1: reps){
+  temp <- d
+  temp$sex <-sample(temp$sex)
+  summary <- temp |>
+    group_by(sex) |>
+    summarize(mean = mean(kernel95))
+  perm[[i]] <- filter(summary, sex == "F") |> pull(mean) - 
+    filter(summary, sex == "M") |> pull(mean)
+}
+
+hist(perm)
+```
+
+```{r}
+p <- sum(perm < -1 * abs(obs) | perm > abs(obs))/reps
+p
+```
+
+```{r}
+#install.packages("infer")
+library(infer)
+```
+
+```{r}
+d <- d |> specify(formula = kernel95 ~ sex)
+d <- d |> hypothesize(null = "independence")
+perm <- d |> generate(reps = 10000, type = "permute")
+perm <- perm |> calculate(stat = "diff in means", order = c("M", "F"))
+perm
+visualize(perm, bins = 20)
+```
+
+read module 16 and exercise 6

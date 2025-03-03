@@ -1,0 +1,547 @@
+---
+title: "16 - Permutation Tests"
+format: html
+editor: 
+  markdown: 
+    wrap: sentence
+---
+
+## Packages to install and load
+
+```{r}
+#install.packages("coin")
+#install.packages("jmuOutlier")
+#install.packages("infer")
+#install.packages("latticeExtra")
+
+library(coin)
+library(jmuOutlier)
+library(infer)
+library(readr)
+library(latticeExtra)
+library(lattice)
+```
+
+Inferential Framework in Module 15
+
+-   Based on modeling sampling distributions for summary statistics using theoretical distributions.
+
+-   However, theoretical distributions may not always be appropriate.
+
+-   Alternative approach: Build sampling distributions using permutation/randomization methods (a type of simulation).
+
+Permutation/Randomization Methods
+
+-   Conceptually similar to bootstrapping (Module 14).
+
+-   Purpose: Generate a permutation (null) distribution to compare against an observed test statistic under the null hypothesis.
+
+-   Method: Resample from observed data.
+    Shuffle attributes according to what would be expected under the null hypothesis.
+
+| Method | Purpose | How it Works |
+|------------------------|------------------------|------------------------|
+| Bootstrap Sampling | Generate sampling distributions for CIs | Resample with replacement from a single sample |
+| Permutation Test | Generate null distribution | Resample without replacement, shuffling attributes of observations |
+
+#### **Example: Reservoir Hydrology Analysis**
+
+-   **Scenario**: Estimating whether water volume differences between **two ancient reservoirs** in Tikal are statistically significant.
+
+-   **Null Hypothesis**: There is **no significant difference** in reservoir volume between the two sites.
+
+-   **Using Permutation Test**:
+
+    -   Shuffle reservoir labels between observed **hydrological volume measurements**.
+
+    -   Resample many times to create a **null distribution** of volume differences.
+
+    -   Compare the **observed volume difference** to the null distribution to assess significance.
+
+#### **Applications of Permutation Tests**
+
+-   Comparing **mean water volumes** between **multiple reservoirs**.
+
+-   Evaluating **hydrological carrying capacity** differences between wetlands and reservoirs.
+
+-   Testing **significance of rainfall-runoff models** by reshuffling precipitation inputs.
+
+-   Flexible for **various hydrological tests**, especially when theoretical assumptions may not hold.
+
+## One Sample Permutation Test
+
+Test:
+
+-   We are testing whether **vervet monkeys trapped in 2015 differ in weight** from an expected population mean.
+
+-   The null hypothesis (**H₀**) assumes that the **average weight has not changed** from the expected mean (μ = 5 kg).
+
+-   The alternative hypothesis (**H₁**) suggests that the **average weight has changed**.
+
+#### **What is the Test Statistic?**
+
+-   A **test statistic** is a numerical value summarizing the difference between observed data and what is expected under **H₀**.
+
+-   Instead of calculating a **z-score** or **t-score** (which standardizes the difference by dividing by the standard error), we use the **raw difference** between the observed sample mean and the expected mean: \\text{actual_diff} = \\bar{x} - \\mu where:
+
+    -   xˉ\bar{x}xˉ = observed sample mean
+
+    -   μ\muμ = expected population mean under **H₀**
+
+#### **Why Use the Actual Difference Instead of a z-score or t-score?**
+
+-   In **parametric tests** (e.g., t-tests), we typically compute a **z-score/t-score** to compare against a known theoretical distribution.
+
+-   However, in **randomization or permutation tests**, we do not assume a theoretical distribution.
+    Instead, we **simulate** a null distribution by randomly shuffling data.
+
+-   The **actual difference (`actual_diff`) is used as the test statistic** because:
+
+    -   It **directly measures** how far the observed mean is from the expected mean.
+
+    -   In a permutation test, we will **shuffle data and recalculate this difference multiple times** to see if the observed difference is unusual.
+
+    -   If most shuffled datasets produce differences near **zero**, then the observed difference is likely due to random chance.
+
+    -   If the observed difference is **extreme compared to the simulated null distribution**, we reject **H₀**.
+
+#### **Example in Hydrology (Reservoir Volumes)**
+
+-   Suppose we compare the **average water volume of a reservoir** in 2025 vs. historical records.
+
+-   Null Hypothesis (**H₀**): The mean volume has **not changed** from historical records.
+
+-   Instead of a **t-test**, we compute: \\text{actual_diff} = \\bar{x}\_{\\text{observed}} - \\mu\_{\\text{historical}}
+
+-   We **randomly shuffle reservoir volume data** to build a null distribution and see how often such a difference occurs **by chance**.
+
+-   If the observed difference is extreme, it suggests a **real change** in reservoir volume.
+
+```{r}
+f <- "https://raw.githubusercontent.com/difiore/ada-datasets/main/vervet-weights.csv"
+
+d <- read_csv(f, col_names = TRUE)
+```
+
+### Step 1: find your test statistic
+
+```{r}
+x <- d$weight #current weights
+n <- length(x) #sample size (which is the how many weights we have)
+m <- mean(x) #mean of our weights
+mu <- 5 #expected weight (null hypothesis)
+(actual_diff <- m - mu) #difference between our sample mean and expected weight
+```
+
+#### **Key Concept**
+
+-   **Permutation/randomization tests** create a **null distribution** by **resampling and shuffling** attributes of the observed data.
+
+-   Unlike traditional tests, they **do not assume** the data follows a theoretical distribution.
+
+#### **Applying Permutation to Vervet Monkey Body Size Data**
+
+-   **Null Hypothesis (H₀)**: No difference between the **2015 sample mean** and the **expected mean** from previous years.
+
+-   **To simulate this null hypothesis**, we:
+
+    -   **Randomly shuffle the sign** of each individual weight difference from the expected mean.
+
+    -   Compute the mean for each permutation.
+
+    -   Generate a **permutation distribution** of possible test statistics under **H₀**.
+
+#### **Calculating the p-value in a Permutation Test**
+
+-   The **p-value** is the probability of obtaining a test statistic **as extreme or more extreme** than the observed value **by chance**.
+
+-   **Empirical Calculation**:
+
+    -   Count how many simulated test statistics are **greater than or equal to** the observed test statistic.
+
+    -   Divide by the **number of permutations**.
+
+    -   Formula: p=#(simulated test stats ≥ observed test stat)total permutationsp = \frac{\text{\#(simulated test stats ≥ observed test stat)}}{\text{total permutations}}p=total permutations#(simulated test stats ≥ observed test stat)​
+
+-   **Adjustment to Avoid p = 0**:
+
+    -   Sometimes, **1 is added to both the numerator and denominator** to ensure the p-value **never equals exactly 0**.
+
+#### **Running the Permutation Test (10,000 Simulations)**
+
+-   **Shuffle signs** of weight differences **10,000 times**.
+
+-   Compare observed mean difference to the **permutation distribution**.
+
+-   Calculate **p-value** to assess statistical significance.
+
+-   **Visualize** by plotting the **approximate permutation distribution** and overlaying the observed test statistic.
+
+#### **Example in Hydrology (Reservoir Volumes)**
+
+-   **Testing if a reservoir's 2025 mean volume differs from historical levels.**
+
+-   **Null Hypothesis (H₀)**: No difference in volume.
+
+-   **Permutation Method**:
+
+    -   Shuffle signs of volume deviations from the historical mean.
+
+    -   Generate a null distribution of **randomized volume differences**.
+
+    -   Compare **observed volume difference** to simulated distribution.
+
+    -   Calculate p-value: If the observed volume difference is extreme, **we reject H₀**, indicating a real change in hydrology.
+
+```{r}
+nperm <- 1000
+permuted_diff <- vector(length = n) #set up dummy vector to hold results for each permutation
+for (i in 1:nperm) {
+  # now we scramble the sign of individual observed - expected   weights, and
+  # then take mean
+  permuted_diff[[i]] <- mean(sample(c(-1, 1), length(x), replace = TRUE) * abs(x - mu))
+}
+
+#calculate the two.sided p value
+(p <- (sum(permuted_diff >= abs(actual_diff)) + sum(permuted_diff <= -abs(actual_diff)))/nperm)
+```
+
+```{r}
+histogram(permuted_diff, type = "count", xlab = "", ylab = "# Permutations", main = "Histogram of Permutation Distribution")
+ladd(panel.abline(v = actual_diff, lty = 3, lwd = 2))
+ladd(panel.text(x = actual_diff, y = nperm * 0.08, "Test Statistic", srt = 90, pos = 4,
+    offset = 1))
+```
+
+```{r}
+library(ggplot2)
+
+ggplot(data.frame(permuted_diff), aes(x = permuted_diff)) +
+  geom_histogram(binwidth = 0.1, fill = "thistle2", color = "thistle3") +
+  geom_vline(xintercept = actual_diff, linetype = "dashed", size = 1, color = "violetred") +
+  labs(title = "Histogram of Permutation Distribution", x = "", y = "# Permutations") + theme_light()
+
+```
+
+```{r}
+# first show plot
+perm.test(x, alternative = "two.sided", mu = mu, plot = TRUE, num.sim = nperm)
+abline(v = actual_diff, lty = 3, lwd = 2)
+text(x = actual_diff, y = nperm * 0.065, "Test Statistic", srt = 90, pos = 4, offset = 1)
+```
+
+### **What This Means**
+
+1.  **Histogram Interpretation**:
+
+    -   The bars show the **frequency** of different test statistics generated by permutation resampling.
+
+    -   This distribution represents what we would expect if the **null hypothesis were true** (i.e., no difference in means).
+
+2.  **Dashed Line (Observed Test Statistic)**:
+
+    -   This marks the actual observed difference between the 2015 vervet monkey weights and the expected mean.
+
+    -   If the dashed line is **far in the tail** of the histogram, it suggests that our observed statistic is **unusual under H₀**.
+
+3.  **p-value & Statistical Significance**:
+
+    -   The **p-value** is calculated by counting the proportion of simulated test statistics that are **equal to or more extreme** than the dashed line.
+
+    -   If **few or none** of the permuted test statistics reach the dashed line, the p-value is **low**, meaning the observed difference is **unlikely due to random chance**.
+
+    -   If the dashed line is **within the bulk of the histogram**, the p-value is **high**, meaning the observed difference could plausibly happen by chance.
+
+### **What This Tells Us**
+
+-   If the dashed line is **in the far right tail**, the **observed difference is extreme**, suggesting **strong evidence against H₀** (likely a real effect).
+
+-   If the dashed line **falls within the main body of the histogram**, then the observed difference is **not unusual** under H₀, meaning **we fail to reject the null hypothesis** (no strong evidence of a real difference).
+
+#### **Next Step: Compute the p-value**
+
+-   If **p-value \< 0.05**, we reject H₀ → significant difference.
+
+-   If **p-value \> 0.05**, we fail to reject H₀ → no strong evidence of a difference.
+
+### Two tailed P-value test
+
+```{r}
+# then 2 tailed p value
+perm.test(x, alternative = "two.sided", mu = mu, plot = FALSE, num.sim = nperm)
+```
+
+### **Interpreting the Results of the One-Sample Permutation Test**
+
+#### **Key Takeaways from Your Output**
+
+1.  **Test Performed**:
+
+    -   A **one-sample permutation test** was conducted to determine if the mean weight of vervet monkeys in 2015 **differs significantly** from the expected mean (μ=5\mu = 5μ=5).
+
+2.  **Simulations Used**:
+
+    -   The **p-value** was estimated using **1,000 permutations**, meaning the null distribution was generated by shuffling data 1,000 times.
+
+3.  **Alternative Hypothesis**:
+
+    -   The test was **two-sided**, meaning we were testing for any significant **increase or decrease** in the 2015 mean compared to μ=5\mu = 5μ=5.
+
+4.  **p-value**:
+
+    -   **p = 0.024**, which is **below 0.05** (typical significance threshold).
+
+------------------------------------------------------------------------
+
+### **What This Means**
+
+-   Since **p = 0.024**, we **reject the null hypothesis (H₀)** at the **5% significance level**.
+
+-   This suggests that the observed mean weight in 2015 **is significantly different** from the expected mean of 5 kg.
+
+-   The difference **is unlikely due to random chance**, based on the permutation distribution.
+
+------------------------------------------------------------------------
+
+### **Interpreting the Histogram**
+
+-   Your **observed test statistic (dashed line)** falls in the **right tail** of the null distribution.
+
+-   Since **very few permuted test statistics** were as extreme as the observed one, it indicates that the weight change is **statistically significant**.
+
+------------------------------------------------------------------------
+
+### **Conclusion**
+
+✔ The **2015 vervet monkey weights differ significantly** from historical expectations.\
+✔ This difference is **unlikely due to random chance**.\
+✔ Further investigation is needed to **understand the cause** (e.g., environmental changes, food availability, trapping methods).
+
+If this were a **hydrology** study, a similar approach could be used to **test whether a reservoir's volume in 2025 significantly differs from historical averages**.
+
+## Two Sample Permutation Test
+
+```{r}
+f <- "https://raw.githubusercontent.com/difiore/ada-datasets/main/colobus-weights.csv"
+d <- read_csv(f, col_names = TRUE)
+head(d)
+```
+
+```{r}
+# Subset the data to extract weights of female vervet monkeys
+x <- d[d$sex == "female", ]$weight  
+
+# Subset the data to extract weights of male vervet monkeys
+y <- d[d$sex == "male", ]$weight  
+
+# Compute the difference in mean weight between females and males
+(actual_diff <- mean(x) - mean(y))  
+```
+
+-   If `actual_diff > 0`: Females are, on average, **heavier** than males.
+
+-   If `actual_diff < 0`: Females are, on average, **lighter** than males.
+
+In this case actual_diff = -1.449 meaning females are on average lighter than males
+
+### **Permutation Test for Significance of Sex-Based Weight Differences**
+
+#### **Steps in the Permutation Test**
+
+-   **Null Hypothesis (H₀)**: There is **no difference** in mean weight between male and female vervet monkeys.
+
+-   **Simulation Process**:
+
+    1.  **Shuffle** the "sex" labels randomly among all observations.
+
+    2.  **Recalculate the mean weight difference** (female - male) for each shuffled dataset.
+
+    3.  **Repeat** this process many times (e.g., 1,000+ permutations) to generate a **null distribution** of weight differences.
+
+#### **p-Value Calculation**
+
+-   Compute the **p-value** by finding the proportion of simulated test statistics that are **equal to or more extreme** than the observed difference.
+
+-   Since the test is **two-sided**, we consider **both** extremes of the distribution (large positive and large negative differences).
+
+-   Formula: p=#(simulated differences ≥ observed difference)total permutationsp = \frac{\text{\#(simulated differences ≥ observed difference)}}{\text{total permutations}}p=total permutations#(simulated differences ≥ observed difference)​
+
+#### **Visualization & Interpretation**
+
+-   **Plot the permutation distribution** (histogram of permuted weight differences).
+
+-   **Overlay the observed test statistic** (actual male-female weight difference) as a dashed line.
+
+-   If the observed difference is **in the tails of the distribution**, it suggests a **statistically significant difference** between male and female weights.
+
+#### **Conclusion**
+
+✔ If **p-value \< 0.05**, we **reject H₀** → significant weight difference between sexes.\
+✔ If **p-value \> 0.05**, we **fail to reject H₀** → no strong evidence of a weight difference.
+
+```{r}
+nperm <- 1000 #number of simulations
+
+#create dummy vector
+permuted_diff <- vector(length = n)
+test_data <- d # Copy original dataset to avoid modifying the original data
+for (i in 1:nperm) { # Loop through nperm(10,000 permutations) to generate a null distribution
+  test_data$sex <- sample(test_data$sex) # Randomly shuffle (permute) the "sex" column, breaking any real association with weight
+  x <- test_data[test_data$sex == "female", ]$weight  # Extract weights of individuals labeled as "female" after shuffling
+  y <- test_data[test_data$sex == "male", ]$weight  # Extract weights of individuals labeled as "male" after shuffling
+  permuted_diff[[i]] <- mean(x) - mean(y)  # Compute and store the mean weight difference between shuffled groups
+}
+
+# Calculate the empirical p-value by counting how often the simulated weight differences are as extreme as the observed difference
+(p <- (sum(permuted_diff >= abs(actual_diff)) + sum(permuted_diff <= -abs(actual_diff)))/nperm)  
+
+
+
+
+
+
+
+```
+
+### **What Does `p = 0` Mean?**
+
+Your permutation test returned **p = 0**, which suggests that **none** of the 10,000 simulated mean weight differences were as extreme as (or more extreme than) the observed difference.
+
+### **Possible Interpretations:**
+
+1.  **Strong Evidence Against the Null Hypothesis**
+
+    -   Since `p = 0`, the observed difference is **so extreme** that it **never appeared** in the simulated null distribution.
+
+    -   This suggests that the weight difference between males and females is **highly significant** and unlikely to have occurred by random chance.
+
+    -   In practical terms, this means the observed weight difference is **statistically significant beyond the resolution of the test** (because the test only ran 10,000 simulations).
+
+2.  **Potential Issue: Limited Number of Permutations**
+
+    -   Since `p-value` is estimated from a **finite number of simulations** (`nperm = 10,000`), the smallest nonzero value it can take is **1/10,000 = 0.0001**.
+
+    -   If `p = 0`, it could mean the sample size is **too small relative to the effect size** or that **more permutations are needed** to refine the estimate.
+
+```{r}
+histogram(permuted_diff, type = "count", xlab = "", ylab = "# Permutations", main = "Histogram of Permutation Distribution",
+    xlim = c(-1.75, 1.75))
+```
+
+1.  **Centered Around 0**
+
+    -   The distribution is **approximately centered at 0**, which aligns with H₀ (no real difference between male and female weights).
+
+    -   This suggests that **random shuffling** usually results in small or no differences in mean weight.
+
+2.  **Symmetric Shape**
+
+    -   The distribution appears **bell-shaped**, meaning most permutations resulted in values close to **0**, with fewer extreme values.
+
+    -   This suggests that the **mean weight difference due to random chance** is usually small.
+
+3.  **Missing the Observed Test Statistic**
+
+    -   The **actual observed mean difference** (dashed line in previous plots) is likely **far from this distribution**, which explains why `p = 0`.
+
+    -   If the observed difference is **outside the range** of this null distribution, it strongly suggests that the weight difference **is not due to random chance**.
+
+```{r}
+# first show plot
+perm.test(x, alternative = "two.sided", mu = mu, plot = TRUE, num.sim = nperm)
+abline(v = actual_diff, lty = 3, lwd = 2)
+text(x = actual_diff, y = nperm * 0.065, "Test Statistic", srt = 90, pos = 4, offset = 1)
+```
+
+### **Two Sample Permutation Test (Step-by-Step)**
+
+1.  **Purpose of the Test:**
+
+    -   To evaluate whether male and female black-and-white colobus monkeys differ in body weight.
+
+2.  **Steps to Conduct the Test:**
+
+    -   Load the dataset containing male and female colobus body weights.
+
+    -   Calculate the **observed difference** in average weights between females and males.
+
+    -   **Permutation process:**
+
+        -   Randomly shuffle (permute) the sex labels multiple times.
+
+        -   Each time, recalculate the difference in average body weight.
+
+    -   Generate a **null distribution** using the permuted differences.
+
+    -   Compare the observed difference to the null distribution to determine if it is **statistically significant**.
+
+3.  **Interpreting Results:**
+
+    -   If the observed difference is extreme compared to the null distribution, the difference is **unlikely due to chance**, suggesting a true difference in body weight.
+
+    -   If the observed difference falls within the null distribution, there is **no significant difference** between male and female body weights.
+
+```{r}
+f <- "https://raw.githubusercontent.com/difiore/ada-datasets/main/colobus-weights.csv"
+d <- read_csv(f, col_names = TRUE)
+head(d)
+```
+
+```{r}
+x <- d[d$sex == "female", ]$weight
+y <- d[d$sex == "male", ]$weight
+(actual_diff <- mean(x) - mean(y))
+```
+
+### **Permutation Test for Significance: Step-by-Step**
+
+1.  **Null Hypothesis:**
+
+    -   There is **no difference** in body weight between male and female black-and-white colobus monkeys.
+
+2.  **Generating the Permutation Distribution:**
+
+    -   Randomly shuffle (permute) the **sex labels** for each individual.
+
+    -   Calculate the **difference in mean weights** (female - male) for each permuted dataset.
+
+    -   Repeat this **many times** (e.g., 10,000 permutations) to create a **null distribution** of weight differences.
+
+3.  **Calculating the p-value:**
+
+    -   Compare the **observed difference** to the null distribution.
+
+    -   The **p-value** is the proportion of permuted differences that are **as extreme or more extreme** than the observed difference.
+
+    -   This is calculated using a **two-sided test**, meaning we test for any significant difference (not just higher or lower).
+
+4.  **Visualizing Results:**
+
+    -   Plot the **approximate permutation distribution** (histogram of permuted differences).
+
+    -   Superimpose the **observed difference** to see if it falls in the extreme tails.
+
+```{r}
+nperm <- 1000 #number of permutations
+
+permuted_diff <- vector(length = n) #dummy vector
+test_data <- d #assign data to new variable so that you do not alter original data
+for (i in 1:nperm) {
+  test_data$sex <-sample(test_data$sex)
+  x <- test_data[test_data$sex == "female", ]$weight
+  y <- test_data[test_data$sex == "male", ]$weight
+  permuted_diff[[i]] <- mean(x) - mean(y)
+}
+
+(p <- (sum(permuted_diff >= abs(actual_diff)) + sum(permuted_diff <= -abs(actual_diff)))/nperm)
+```
+
+```{r}
+histogram(permuted_diff, type = "count", xlab = "", ylab = "# Permutations", main = "Histogram of Permutation Distribution",
+    xlim = c(-1.75, 1.75))
+```
+
+```{r}
+independence_test(weight ~ as.factor(sex), alternative = "two.sided", distribution = "approximate",
+    data = d)
+```
