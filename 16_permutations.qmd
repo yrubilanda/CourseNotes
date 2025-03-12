@@ -8,6 +8,10 @@ editor:
 
 ## Packages to install and load
 
+generate a sampling distribution for a t-test, so creating a test statistic, and then taking our data and shuffled our data randomly and ex.
+body sizes were randomly sized to male or female and then recalculate the average of our permuted test statistic.
+Should be centered on 0 and compare where our observed test statistic was.
+
 ```{r}
 #install.packages("coin")
 #install.packages("jmuOutlier")
@@ -40,7 +44,7 @@ Permutation/Randomization Methods
     Shuffle attributes according to what would be expected under the null hypothesis.
 
 | Method | Purpose | How it Works |
-|------------------------|------------------------|------------------------|
+|----|----|----|
 | Bootstrap Sampling | Generate sampling distributions for CIs | Resample with replacement from a single sample |
 | Permutation Test | Generate null distribution | Resample without replacement, shuffling attributes of observations |
 

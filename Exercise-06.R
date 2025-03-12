@@ -14,6 +14,44 @@ d <- read_csv(f, col_names = TRUE)
 d <- d|> 
   select(sex, kernel95)
 
+d <- d|>
+  specify(formula = kernel95 ~ sex)
+
+#declare null hypothesis which we want to test, break the association between the two variables
+d <- d |>
+  hypothesize(null = "independence")
+
+#number of replicates and type
+perm <- d |>
+  generate(reps = 1000, type = "permute")
+
+#calculate sumamry statistics of interest
+#difference in m, and f home range size means.
+perm <- perm |>
+  calculate(stat = "diff in means", order = c("M", "F")) #you can ask it what stats you want it to calculate
+
+visualize(perm, bins = 20)
+
+obs <- d |>
+  specify(kernel95 ~ sex) |>
+  calculate(stat = "diff in means", order = c("M", "F"))
+
+visualize(perm, bins = 20) +
+  shade_p_value(obs_stat = obs, direction = "both")
+
+
+#reject null hypothesis of there being no association between sex and home range size
+
+
+
+
+
+
+
+
+
+
+
 #determine mean, standard deviation, and standard error in kernel95 for each sex
 sample_stats <- d |>
   group_by(sex) |> #groub by sex
